@@ -1,4 +1,11 @@
 # SBMTrees 
+  <!-- badges: start -->
+  [![R-CMD-check](https://github.com/zjg540066169/SBMtrees/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/zjg540066169/SBMtrees/actions/workflows/R-CMD-check.yaml)
+  [![License: GPL-2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
+  [![version](https://img.shields.io/badge/version-1.1-green.svg)](https://github.com/zjg540066169/SBMTrees)
+  ![R](https://img.shields.io/badge/language-R-blue)
+  ![C++](https://img.shields.io/badge/language-C%2B%2B-green)
+  <!-- badges: end -->
 
 The R package **SBMTrees** (Sequential imputation with Bayesian Trees Mixed-Effects models) implements a Bayesian non-parametric framework for imputing missing covariates and outcomes in longitudinal data under the Missing at Random (MAR) assumption. Its core model, the Bayesian Trees Mixed-Effects Model (BMTrees), extends Mixed-Effects BART by employing centralized Dirichlet Process (CDP) Normal Mixture priors, allowing it to handle non-normal random effects and errors, address model misspecification, and capture complex relationships. The package also includes two semiparametric variants, BMTrees_R and BMTrees_RE. Built on BMTrees, the longitudinal sequential imputation framework employs a Metropolis-Hastings (M-H) MCMC method to sequentially impute missing values by constructing univariate models in a fixed order, ensuring both simplicity and consistency with a valid joint distribution.
 
@@ -8,7 +15,11 @@ For more details on these models and their applications, please consult the foll
 ## Installation
 This package is based on `Rcpp`, `RcppArmadillo`, and `RcppDist`, please make sure these three packages can be installed.
 
-Right now, the package has not been uploaded to Rcran yet, so please install this package from Github:
+This package can be installed from R CRAN:
+```
+install.packages("SBMTrees")
+```
+or Github:
 ```
 require("devtools")
 install_github("https://github.com/zjg540066169/SBMTrees")
@@ -123,3 +134,6 @@ The original source code, licensed under the [GNU General Public License version
 
 - The original BART3 package is licensed under the GNU General Public License version 2 (GPL-2).
 - This package, as a derived work, is also licensed under the GNU General Public License version 2 (GPL-2) to comply with the licensing terms.
+
+
+

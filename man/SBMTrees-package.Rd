@@ -42,8 +42,11 @@
 }
 \examples{
      ## Example of predicting longitudinal outcomes
+     ## To make it faster to compile and check, we only run 30 iterations for 
+     ## burn-in and 40 for posterior sampling phases.
+     ## Please increase to 3000 and 4000 iterations, respectively, when running the models.
      \donttest{
-     data <- simulation_prediction(n_subject = 800, seed = 1234, nonlinear = TRUE,
+     data <- simulation_prediction(n_subject = 100, seed = 1234, nonlinear = TRUE,
              nonrandeff = TRUE, nonresidual = TRUE)
      X_train <- data$X_train
      Y_train <- data$Y_train
@@ -60,7 +63,7 @@
      
      
      
-     data2 = simulation_imputation(n_subject = 800, seed = 1234, nonrandeff = TRUE, 
+     data2 = simulation_imputation(n_subject = 100, seed = 1234, nonrandeff = TRUE, 
              nonresidual = TRUE, alligned = FALSE) 
      X_mis = data2$X_mis # get missing covariates
      Y_mis = data2$Y_mis # get missing outcomes
@@ -68,7 +71,7 @@
      subject_id = data2$subject_id  # get subject id
 
      model2 = sequential_imputation(X_mis, Y_mis, Z, subject_id, rep(0, 9), FALSE, 
-             model = "BMTrees", nburn = 3000L, npost = 4000L, skip = 200L, 
+             model = "BMTrees", nburn = 30L, npost = 40L, skip = 2L, 
              verbose = TRUE, seed = 1234)
      model2$imputed_data
      model2$imputed_data[,,10]

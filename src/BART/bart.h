@@ -21,6 +21,8 @@
  *  Modifications by Jungang Zou, 2024.
  *  - To make it easier to compile, I move the function definitions in the separate 
  *  .cpp file to this file, and merge them with declaration.
+ *  
+ *  - Add initial version of aug.
  *
  *  These modifications comply with the terms of the GNU General Public License 
  *  version 2 (GPL-2).
@@ -38,9 +40,9 @@
 
 class bart {
 public:
-   bart():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {};
-   bart(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false) {};
-   bart(const bart& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false)
+   bart():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false) {};
+   bart(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false) {};
+   bart(const bart& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false)
    {
      this->t = ib.t;
    };
@@ -675,6 +677,7 @@ public:
          allfit[k] = allfit[k]-ftemp[k];
          r[k] = y[k]-allfit[k];
        }
+       aug = (aug != 0);
        bd_bart(t[j],xi,di,pi,sigma,nv,pv,aug,gen);
        drmu_bart(t[j],xi,di,pi,sigma,gen);
        fit3(t[j],xi,p,n,x,ftemp);
