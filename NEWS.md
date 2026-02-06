@@ -1,5 +1,11 @@
 # NEWS for SBMTrees
 
+## Version 1.3 (2026-02-03) - Bug Fix Release
+
+**Changes:**
+- **Model Fixed**: Modify some functions for prediction and inference.
+---
+
 ## Version 1.2 (2024-12-10) - Bug Fix Release
 
 **Changes:**

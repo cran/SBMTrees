@@ -2,64 +2,65 @@
 % Please edit documentation in R/simulation_imputation.R
 \name{simulation_imputation}
 \alias{simulation_imputation}
-\title{Simulate Longitudinal Data with Missingness}
+\title{Simulate Longitudinal Data with Missing Values for Imputation}
 \usage{
-simulation_imputation(
-  n_subject = 800,
-  seed = NULL,
-  nonrandeff = FALSE,
-  nonresidual = FALSE,
-  alligned = FALSE
-)
+simulation_imputation(NNY = TRUE, NNX = TRUE, n_subject = 1000, seed = NULL)
 }
 \arguments{
-\item{n_subject}{Number of subjects in the dataset. Each subject has multiple observations. Default: \code{800}.}
+\item{NNY}{A logical value. If \code{TRUE}, the outcome \code{Y} is generated using non-normal distributions
+(Skew-t random effects, t-distribution residuals). If \code{FALSE}, it uses standard Normal distributions.
+Default: \code{TRUE}.}
 
-\item{seed}{Random seed for reproducibility. Default: \code{123}.}
+\item{NNX}{A logical value. If \code{TRUE}, the covariates \code{X_7} through \code{X_12} are generated using
+non-normal distributions (Mixture models, Skew-t random effects). If \code{FALSE}, they use standard Normal distributions.
+Default: \code{TRUE}.}
 
-\item{nonrandeff}{Logical value indicating whether the random effects are non-normal. Default: \code{FALSE}.}
+\item{n_subject}{An integer specifying the number of subjects. Default: \code{1000}.}
 
-\item{nonresidual}{Logical value indicating whether the residuals are non-normal. Default: \code{FALSE}.}
-
-\item{alligned}{Logical value indicating whether the covariates should be aligned (\code{TRUE})
-or shuffled (\code{FALSE}). Default: \code{FALSE}. If it is shuffled, we will return covariate order as X1, X2, X3, X4, X5, X6, X9, X8, X7. If it is alligned, we will return covariate order as X1, X2, X3, X4, X5, X6, X7, X8, X9.}
+\item{seed}{An optional integer for setting the random seed to ensure reproducibility. Default: \code{NULL}.}
 }
 \value{
-A list containing:
+A list containing the following components:
 \describe{
-\item{\code{X_mis}}{Matrix of missing covariates.}
-\item{\code{Y_mis}}{Vector of missing outcomes.}
-\item{\code{Z}}{Matrix of complete random predictors.}
-\item{\code{subject_id}}{Vector of subject IDs.}
-\item{\code{time}}{Time points for each observation.}
-\item{\code{X_O}}{Matrix of original complete covariates (for evaluation).}
-\item{\code{Y_O}}{Vector of original complete outcomes (for evaluation).}
+\item{data_E}{A data frame of the \strong{complete} data (ground truth) without any missing values.}
+\item{data_M}{A data frame of the \strong{incomplete} data, containing \code{NA}s introduced by intermittent missingness and dropout.}
+\item{data_O}{A duplicate of \code{data_E} used internally for generating missingness probabilities.}
+\item{Z}{A matrix of random predictors (intercept and time slopes) used in generation.}
+\item{pair}{A matrix summarizing the missing data pattern (generated via \code{mice::md.pattern}).}
 }
 }
 \description{
-Generates a dataset with longitudinal data containing missing covariates and outcomes.
-The function allows customization of random effects, residuals, and the alignment of covariates to simulate
-data under different conditions.
+Generates synthetic longitudinal data specifically designed to evaluate
+missing data imputation methods. The function creates a complex dataset with:
+\itemize{
+\item \strong{Time-varying covariates} with autoregressive structures and random effects.
+\item \strong{Non-linear relationships} and interactions between covariates.
+\item \strong{Mixed data types} (continuous and binary/logical).
+\item \strong{Non-normal Distributions} (optional) for both random effects and residuals (Skew-t, t-distribution).
+\item \strong{Missing Data Mechanisms}:
+\itemize{
+\item \emph{Intermittent Missingness}: Generated via logistic models conditioned on outcomes and other covariates.
+\item \emph{Loss to Follow-up (LTFU)}: Simulates subject dropout starting from time point 4 based on values at time point 3.
+}
+}
 }
 \details{
-This function creates longitudinal data for multiple subjects, each observed across 6
-time points. Non-normal or normal random effects and residual conditions can be specified. Missing values are introduced based MAR assumption.
-The alignment of covariates can be customized to test different imputation scenarios.
+The simulation process creates 12 covariates (\code{X_1} to \code{X_12}):
+\itemize{
+\item \code{X_1} to \code{X_6}: Base covariates generated via multivariate normal distributions with autoregressive sigma. \code{X_4, X_5, X_6} are converted to binary.
+\item \code{X_7} to \code{X_12}: Derived covariates dependent on the base set, involving non-linear transformations (squares, logs, interactions).
+}
+
+Missingness is introduced in two stages:
+\enumerate{
+\item \strong{Intermittent Missingness}: For variables \code{X_7} to \code{X_12}, missingness indicators are drawn from Bernoulli distributions where the probability depends on the outcome \code{Y} and other covariates.
+\item \strong{Dropout}: A "Loss to Follow-up" indicator is generated based on data at time point 3. If a subject drops out, all values for time points 4 and 5 become \code{NA}.
+}
 }
 \examples{
-simulated_data <- simulation_imputation(
-  n_subject = 800,
-  seed = 123,
-  nonrandeff = TRUE,
-  nonresidual = TRUE,
-  alligned = FALSE
-)
-}
-\seealso{
-\code{\link[stats]{Normal}}, \code{\link[stats]{Uniform}}, \code{\link[stats]{Binomial}}, \code{\link[stats]{Chisquare}}, \code{\link[stats]{GammaDist}}
-\code{\link[mvtnorm]{Mvnorm}}
-\code{\link[sn]{dmst}}
-\code{\link[dplyr]{reexports}}, \code{\link[dplyr]{mutate}}, \code{\link[dplyr]{select}}
-\code{\link[tidyr]{pivot_wider}}, \code{\link[tidyr]{pivot_longer}}, \code{\link[tidyr]{reexports}}, \code{\link[tidyr]{separate}}
-\code{\link[arm]{invlogit}}
+# Simulate data with non-normal errors and random effects
+sim_data <- simulation_imputation(NNY = TRUE, NNX = TRUE, n_subject = 10, seed = 123)
+
+# View missing data pattern
+sim_data$pair
 }

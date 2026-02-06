@@ -21,8 +21,6 @@
  *  Modifications by Jungang Zou, 2024.
  *  - To make it easier to compile, I move the function definitions in the separate 
  *  .cpp file to this file, and merge them with declaration.
- *  
- *  - Add initial version of aug.
  *
  *  These modifications comply with the terms of the GNU General Public License 
  *  version 2 (GPL-2).
@@ -40,9 +38,9 @@
 
 class bart {
 public:
-   bart():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false) {};
-   bart(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false) {};
-   bart(const bart& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(false)
+   bart():m(200),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(0),accept(0.),grp(0) {};
+   bart(size_t im):m(im),t(m),pi(),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(0),accept(0.),grp(0) {};
+   bart(const bart& ib):m(ib.m),t(m),pi(ib.pi),p(0),n(0),x(0),y(0),xi(),allfit(0),r(0),ftemp(0),di(),dartOn(false),aug(0),accept(0.),grp(0)
    {
      this->t = ib.t;
    };
@@ -178,7 +176,26 @@ public:
          {t[i].birth(nid,v,c,ml,mr);}
    void death(size_t i,size_t nid, double mu)
          {t[i].death(nid,mu);}
-   void pr();
+   //public functions
+   void pr() //print to screen
+   {
+     cout << "*****bart object:\n";
+     cout << "m: " << m << std::endl;
+     cout << "t[0]:\n " << t[0] << std::endl;
+     cout << "t[m-1]:\n " << t[m-1] << std::endl;
+     cout << "prior and mcmc info:\n";
+     pi.pr();
+     if(dart){
+       cout << "*****dart prior (On):\n";
+       cout << "a: " << a << std::endl;
+       cout << "b: " << b << std::endl;
+       cout << "rho: " << rho << std::endl;
+       cout << "augmentation: " << aug << std::endl;
+     }
+     else cout << "*****dart prior (Off):\n";
+     if(p) cout << "data set: n,p: " << n << ", " << p << std::endl;
+     else cout << "data not set\n";
+   }
    void tonull() {for(size_t i=0;i!=t.size();i++) t[i].tonull();}
    
    void fit2(tree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv)
@@ -669,28 +686,96 @@ public:
      lpv=gen.log_dirichlet(_theta);
    }
    
+   void draw_s(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, rn& gen){
+     size_t p=nv.size();
+     // Now draw s, the vector of splitting probabilities
+     std::vector<double> _theta(p);
+     for(size_t j=0;j<p;j++) _theta[j]=theta/(double)p+(double)nv[j];
+     //gen.set_alpha(_theta);
+     lpv=gen.log_dirichlet(_theta);
+   }
    
-   void draw(double sigma, rn& gen){
+   void draw_s_grp(std::vector<size_t>& nv, std::vector<double>& lpv, double& theta, rn& gen, double * grp, double rho){
+     size_t p=nv.size();
+     // Now draw s, the vector of splitting probabilities
+     std::vector<double> _theta(p);
+     for(size_t j=0;j<p;j++) {
+       if(grp) _theta[j]=theta/(rho*grp[j])+(double)nv[j];
+       else _theta[j]=theta/rho+(double)nv[j];
+     }
+     //gen.set_alpha(_theta);
+     lpv=gen.log_dirichlet(_theta);
+   }
+   
+   void draw(double sigma, rn& gen)
+   {
+     size_t i=0;
      for(size_t j=0;j<m;j++) {
        fit3(t[j],xi,p,n,x,ftemp);
        for(size_t k=0;k<n;k++) {
          allfit[k] = allfit[k]-ftemp[k];
          r[k] = y[k]-allfit[k];
        }
-       aug = (aug != 0);
-       bd_bart(t[j],xi,di,pi,sigma,nv,pv,aug,gen);
-       drmu_bart(t[j],xi,di,pi,sigma,gen);
+       //cout << aug << std::endl;
+       if(bd(t[j],xi,di,pi,sigma,nv,pv,aug,gen)) i++;
+       drmu(t[j],xi,di,pi,sigma,gen);
        fit3(t[j],xi,p,n,x,ftemp);
        for(size_t k=0;k<n;k++) allfit[k] += ftemp[k];
      }
+     accept=i/(double)m;
      if(dartOn) {
-       draw_s_bart(nv,lpv,theta,gen);
-       draw_theta0_bart(const_theta,theta,lpv,a,b,rho,gen);
+       if(grp) draw_s_grp(nv,lpv,theta,gen,grp,rho);
+       else draw_s(nv,lpv,theta,gen);
+       draw_theta0(const_theta,theta,lpv,a,b,rho,gen);
        for(size_t j=0;j<p;j++) pv[j]=::exp(lpv[j]);
      }
    }
+   
+   double log_sum_exp4(std::vector<double>& v){
+     double mx=v[0],sm=0.;
+     for(size_t i=0;i<v.size();i++) if(v[i]>mx) mx=v[i];
+     for(size_t i=0;i<v.size();i++){
+       sm += exp(v[i]-mx);
+     }
+     return mx+log(sm);
+   }
+   
+   void draw_theta0(bool const_theta, double& theta, std::vector<double>& lpv,
+                    double a, double b, double rho, rn& gen){
+     // Draw sparsity parameter theta_0 (Linero calls it alpha); see Linero, 2018
+     // theta / (theta + rho ) ~ Beta(a,b)
+     // Set (a=0.5, b=1) for sparsity
+     // Set (a=1, b=1) for non-sparsity
+     // rho = p usually, but making rho < p increases sparsity
+     if(!const_theta){
+       size_t p=lpv.size();
+       double sumlpv=0.,lse;
+       
+       std::vector<double> lambda_g (1000,0.);
+       std::vector<double> theta_g (1000,0.);
+       std::vector<double> lwt_g (1000,0.);
+       for(size_t j=0;j<p;j++) sumlpv+=lpv[j];
+       for(size_t k=0;k<1000;k++){
+         lambda_g[k]=(double)(k+1)/1001.;
+         theta_g[k]=(lambda_g[k]*rho)/(1.-lambda_g[k]);
+         double theta_log_lik=lgamma(theta_g[k])-(double)p*lgamma(theta_g[k]/(double)p)+(theta_g[k]/(double)p)*sumlpv;
+         double beta_log_prior=(a-1.)*log(lambda_g[k])+(b-1.)*log(1.-lambda_g[k]);
+         //      cout << "SLP: " << sumlogpv << "\nTLL: " << theta_log_lik << "\nBLP: " << beta_log_prior << '\n';
+         lwt_g[k]=theta_log_lik+beta_log_prior;      
+       }
+       lse=log_sum_exp4(lwt_g);
+       for(size_t k=0;k<1000;k++) {
+         lwt_g[k]=exp(lwt_g[k]-lse);
+         //      cout << "LWT: " << lwt_g[k] << '\n';
+       }
+       gen.set_wts(lwt_g);    
+       theta=theta_g[gen.discrete()];
+     } 
+   }
+   
 //   void draw_s(rn& gen);
    double f(size_t i) {return allfit[i];}
+   double getaccept() {return accept;}
 protected:
    size_t m;  //number of trees
    std::vector<tree> t; //the trees
@@ -705,7 +790,9 @@ protected:
    double *ftemp;
    dinfo di;
    bool dart,dartOn,aug,const_theta;
-   double a,b,rho,theta,omega;
+   double a,b,rho,theta,omega,
+   accept; // MH acceptance rate from most recent draw
+   double *grp;
    std::vector<size_t> nv;
    std::vector<double> pv, lpv;
 };

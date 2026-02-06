@@ -40,6 +40,92 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// resample_tau
+List resample_tau(List tau);
+RcppExport SEXP _SBMTrees_resample_tau(SEXP tauSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_tau(tau));
+    return rcpp_result_gen;
+END_RCPP
+}
+// resample_tau_prob
+List resample_tau_prob(List tau, double correct_prob);
+RcppExport SEXP _SBMTrees_resample_tau_prob(SEXP tauSEXP, SEXP correct_probSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< double >::type correct_prob(correct_probSEXP);
+    rcpp_result_gen = Rcpp::wrap(resample_tau_prob(tau, correct_prob));
+    return rcpp_result_gen;
+END_RCPP
+}
+// predict_tau
+NumericMatrix predict_tau(List tau, long N);
+RcppExport SEXP _SBMTrees_predict_tau(SEXP tauSEXP, SEXP NSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< long >::type N(NSEXP);
+    rcpp_result_gen = Rcpp::wrap(predict_tau(tau, N));
+    return rcpp_result_gen;
+END_RCPP
+}
+// probit_probability_tau
+NumericVector probit_probability_tau(List tau, NumericVector y_input);
+RcppExport SEXP _SBMTrees_probit_probability_tau(SEXP tauSEXP, SEXP y_inputSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y_input(y_inputSEXP);
+    rcpp_result_gen = Rcpp::wrap(probit_probability_tau(tau, y_input));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normal_probability_tau
+NumericVector normal_probability_tau(List tau, NumericVector y, double sigma);
+RcppExport SEXP _SBMTrees_normal_probability_tau(SEXP tauSEXP, SEXP ySEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_probability_tau(tau, y, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normal_loglik_tau
+NumericVector normal_loglik_tau(List tau, NumericVector y, double sigma);
+RcppExport SEXP _SBMTrees_normal_loglik_tau(SEXP tauSEXP, SEXP ySEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_loglik_tau(tau, y, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normal_loglik_tau_scalar
+double normal_loglik_tau_scalar(List tau, double y, double sigma);
+RcppExport SEXP _SBMTrees_normal_loglik_tau_scalar(SEXP tauSEXP, SEXP ySEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tau(tauSEXP);
+    Rcpp::traits::input_parameter< double >::type y(ySEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_loglik_tau_scalar(tau, y, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
 // DP_sampler
 List DP_sampler(long N, List& parameters);
 RcppExport SEXP _SBMTrees_DP_sampler(SEXP NSEXP, SEXP parametersSEXP) {
@@ -52,24 +138,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// bart_train
-SEXP bart_train(NumericMatrix X, NumericVector Y, long nburn, long npost, bool verbose);
-RcppExport SEXP _SBMTrees_bart_train(SEXP XSEXP, SEXP YSEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP verboseSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< long >::type nburn(nburnSEXP);
-    Rcpp::traits::input_parameter< long >::type npost(npostSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(bart_train(X, Y, nburn, npost, verbose));
-    return rcpp_result_gen;
-END_RCPP
-}
 // sequential_imputation_cpp
-List sequential_imputation_cpp(NumericMatrix X, NumericVector Y, LogicalVector type, NumericMatrix Z, CharacterVector subject_id, LogicalMatrix R, bool binary_outcome, int nburn, int npost, int skip, bool verbose, bool CDP_residual, bool CDP_re, Nullable<long> seed, double tol, int ncores, int ntrees, bool fit_loss, int resample, double pi_CDP);
-RcppExport SEXP _SBMTrees_sequential_imputation_cpp(SEXP XSEXP, SEXP YSEXP, SEXP typeSEXP, SEXP ZSEXP, SEXP subject_idSEXP, SEXP RSEXP, SEXP binary_outcomeSEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP skipSEXP, SEXP verboseSEXP, SEXP CDP_residualSEXP, SEXP CDP_reSEXP, SEXP seedSEXP, SEXP tolSEXP, SEXP ncoresSEXP, SEXP ntreesSEXP, SEXP fit_lossSEXP, SEXP resampleSEXP, SEXP pi_CDPSEXP) {
+List sequential_imputation_cpp(NumericMatrix X, NumericVector Y, LogicalVector type, NumericMatrix Z, CharacterVector subject_id, LogicalMatrix R, bool outcome_BMTrees, bool binary_outcome, int nburn, int npost, int skip, bool verbose, bool CDP_residual, bool CDP_re, Nullable<long> seed, double tol, int ncores, int ntrees, double k, double pi_CDP, double correct_prob);
+RcppExport SEXP _SBMTrees_sequential_imputation_cpp(SEXP XSEXP, SEXP YSEXP, SEXP typeSEXP, SEXP ZSEXP, SEXP subject_idSEXP, SEXP RSEXP, SEXP outcome_BMTreesSEXP, SEXP binary_outcomeSEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP skipSEXP, SEXP verboseSEXP, SEXP CDP_residualSEXP, SEXP CDP_reSEXP, SEXP seedSEXP, SEXP tolSEXP, SEXP ncoresSEXP, SEXP ntreesSEXP, SEXP kSEXP, SEXP pi_CDPSEXP, SEXP correct_probSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -79,6 +150,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type subject_id(subject_idSEXP);
     Rcpp::traits::input_parameter< LogicalMatrix >::type R(RSEXP);
+    Rcpp::traits::input_parameter< bool >::type outcome_BMTrees(outcome_BMTreesSEXP);
     Rcpp::traits::input_parameter< bool >::type binary_outcome(binary_outcomeSEXP);
     Rcpp::traits::input_parameter< int >::type nburn(nburnSEXP);
     Rcpp::traits::input_parameter< int >::type npost(npostSEXP);
@@ -90,22 +162,22 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< int >::type ncores(ncoresSEXP);
     Rcpp::traits::input_parameter< int >::type ntrees(ntreesSEXP);
-    Rcpp::traits::input_parameter< bool >::type fit_loss(fit_lossSEXP);
-    Rcpp::traits::input_parameter< int >::type resample(resampleSEXP);
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
     Rcpp::traits::input_parameter< double >::type pi_CDP(pi_CDPSEXP);
-    rcpp_result_gen = Rcpp::wrap(sequential_imputation_cpp(X, Y, type, Z, subject_id, R, binary_outcome, nburn, npost, skip, verbose, CDP_residual, CDP_re, seed, tol, ncores, ntrees, fit_loss, resample, pi_CDP));
+    Rcpp::traits::input_parameter< double >::type correct_prob(correct_probSEXP);
+    rcpp_result_gen = Rcpp::wrap(sequential_imputation_cpp(X, Y, type, Z, subject_id, R, outcome_BMTrees, binary_outcome, nburn, npost, skip, verbose, CDP_residual, CDP_re, seed, tol, ncores, ntrees, k, pi_CDP, correct_prob));
     return rcpp_result_gen;
 END_RCPP
 }
 // BMTrees_mcmc
-List BMTrees_mcmc(NumericMatrix X, NumericVector Y, Nullable<NumericMatrix> Z, CharacterVector subject_id, LogicalVector obs_ind, bool binary, long nburn, long npost, bool verbose, bool CDP_residual, bool CDP_re, Nullable<long> seed, double tol, long ntrees, int resample, double pi_CDP);
-RcppExport SEXP _SBMTrees_BMTrees_mcmc(SEXP XSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP subject_idSEXP, SEXP obs_indSEXP, SEXP binarySEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP verboseSEXP, SEXP CDP_residualSEXP, SEXP CDP_reSEXP, SEXP seedSEXP, SEXP tolSEXP, SEXP ntreesSEXP, SEXP resampleSEXP, SEXP pi_CDPSEXP) {
+List BMTrees_mcmc(NumericMatrix X, NumericVector Y, NumericMatrix Z, CharacterVector subject_id, LogicalVector obs_ind, bool binary, long nburn, long npost, bool verbose, bool CDP_residual, bool CDP_re, Nullable<long> seed, double tol, long ntrees, double pi_CDP, double k);
+RcppExport SEXP _SBMTrees_BMTrees_mcmc(SEXP XSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP subject_idSEXP, SEXP obs_indSEXP, SEXP binarySEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP verboseSEXP, SEXP CDP_residualSEXP, SEXP CDP_reSEXP, SEXP seedSEXP, SEXP tolSEXP, SEXP ntreesSEXP, SEXP pi_CDPSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type subject_id(subject_idSEXP);
     Rcpp::traits::input_parameter< LogicalVector >::type obs_ind(obs_indSEXP);
     Rcpp::traits::input_parameter< bool >::type binary(binarySEXP);
@@ -117,9 +189,32 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<long> >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< long >::type ntrees(ntreesSEXP);
-    Rcpp::traits::input_parameter< int >::type resample(resampleSEXP);
     Rcpp::traits::input_parameter< double >::type pi_CDP(pi_CDPSEXP);
-    rcpp_result_gen = Rcpp::wrap(BMTrees_mcmc(X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol, ntrees, resample, pi_CDP));
+    Rcpp::traits::input_parameter< double >::type k(kSEXP);
+    rcpp_result_gen = Rcpp::wrap(BMTrees_mcmc(X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol, ntrees, pi_CDP, k));
+    return rcpp_result_gen;
+END_RCPP
+}
+// BMLMM_mcmc
+List BMLMM_mcmc(NumericMatrix X, NumericVector Y, NumericMatrix Z, CharacterVector subject_id, LogicalVector obs_ind, bool binary, long nburn, long npost, bool verbose, bool CDP_residual, bool CDP_re, Nullable<long> seed, double tol);
+RcppExport SEXP _SBMTrees_BMLMM_mcmc(SEXP XSEXP, SEXP YSEXP, SEXP ZSEXP, SEXP subject_idSEXP, SEXP obs_indSEXP, SEXP binarySEXP, SEXP nburnSEXP, SEXP npostSEXP, SEXP verboseSEXP, SEXP CDP_residualSEXP, SEXP CDP_reSEXP, SEXP seedSEXP, SEXP tolSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type subject_id(subject_idSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type obs_ind(obs_indSEXP);
+    Rcpp::traits::input_parameter< bool >::type binary(binarySEXP);
+    Rcpp::traits::input_parameter< long >::type nburn(nburnSEXP);
+    Rcpp::traits::input_parameter< long >::type npost(npostSEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< bool >::type CDP_residual(CDP_residualSEXP);
+    Rcpp::traits::input_parameter< bool >::type CDP_re(CDP_reSEXP);
+    Rcpp::traits::input_parameter< Nullable<long> >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(BMLMM_mcmc(X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -468,6 +563,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// create_row_id_to_re
+std::unordered_map<std::string, double> create_row_id_to_re(IntegerVector row_id, NumericVector re);
+RcppExport SEXP _SBMTrees_create_row_id_to_re(SEXP row_idSEXP, SEXP reSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type row_id(row_idSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type re(reSEXP);
+    rcpp_result_gen = Rcpp::wrap(create_row_id_to_re(row_id, re));
+    return rcpp_result_gen;
+END_RCPP
+}
 // innerProduct
 double innerProduct(const NumericVector& x, const NumericVector& y);
 RcppExport SEXP _SBMTrees_innerProduct(SEXP xSEXP, SEXP ySEXP) {
@@ -625,14 +732,35 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// replace_column
+LogicalMatrix replace_column(LogicalMatrix replace, int column, LogicalVector rows, LogicalVector values);
+RcppExport SEXP _SBMTrees_replace_column(SEXP replaceSEXP, SEXP columnSEXP, SEXP rowsSEXP, SEXP valuesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< LogicalMatrix >::type replace(replaceSEXP);
+    Rcpp::traits::input_parameter< int >::type column(columnSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type rows(rowsSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type values(valuesSEXP);
+    rcpp_result_gen = Rcpp::wrap(replace_column(replace, column, rows, values));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_SBMTrees_DP", (DL_FUNC) &_SBMTrees_DP, 5},
     {"_SBMTrees_update_DP_normal", (DL_FUNC) &_SBMTrees_update_DP_normal, 4},
+    {"_SBMTrees_resample_tau", (DL_FUNC) &_SBMTrees_resample_tau, 1},
+    {"_SBMTrees_resample_tau_prob", (DL_FUNC) &_SBMTrees_resample_tau_prob, 2},
+    {"_SBMTrees_predict_tau", (DL_FUNC) &_SBMTrees_predict_tau, 2},
+    {"_SBMTrees_probit_probability_tau", (DL_FUNC) &_SBMTrees_probit_probability_tau, 2},
+    {"_SBMTrees_normal_probability_tau", (DL_FUNC) &_SBMTrees_normal_probability_tau, 3},
+    {"_SBMTrees_normal_loglik_tau", (DL_FUNC) &_SBMTrees_normal_loglik_tau, 3},
+    {"_SBMTrees_normal_loglik_tau_scalar", (DL_FUNC) &_SBMTrees_normal_loglik_tau_scalar, 3},
     {"_SBMTrees_DP_sampler", (DL_FUNC) &_SBMTrees_DP_sampler, 2},
-    {"_SBMTrees_bart_train", (DL_FUNC) &_SBMTrees_bart_train, 5},
-    {"_SBMTrees_sequential_imputation_cpp", (DL_FUNC) &_SBMTrees_sequential_imputation_cpp, 20},
+    {"_SBMTrees_sequential_imputation_cpp", (DL_FUNC) &_SBMTrees_sequential_imputation_cpp, 21},
     {"_SBMTrees_BMTrees_mcmc", (DL_FUNC) &_SBMTrees_BMTrees_mcmc, 16},
+    {"_SBMTrees_BMLMM_mcmc", (DL_FUNC) &_SBMTrees_BMLMM_mcmc, 13},
     {"_SBMTrees_update_Covariance", (DL_FUNC) &_SBMTrees_update_Covariance, 5},
     {"_SBMTrees_max_d", (DL_FUNC) &_SBMTrees_max_d, 2},
     {"_SBMTrees_seqD", (DL_FUNC) &_SBMTrees_seqD, 3},
@@ -662,6 +790,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SBMTrees_make_nonsingular", (DL_FUNC) &_SBMTrees_make_nonsingular, 1},
     {"_SBMTrees_create_subject_to_B", (DL_FUNC) &_SBMTrees_create_subject_to_B, 1},
     {"_SBMTrees_create_row_id_to_row", (DL_FUNC) &_SBMTrees_create_row_id_to_row, 1},
+    {"_SBMTrees_create_row_id_to_re", (DL_FUNC) &_SBMTrees_create_row_id_to_re, 2},
     {"_SBMTrees_innerProduct", (DL_FUNC) &_SBMTrees_innerProduct, 2},
     {"_SBMTrees_cov", (DL_FUNC) &_SBMTrees_cov, 2},
     {"_SBMTrees_isPositiveDefinite", (DL_FUNC) &_SBMTrees_isPositiveDefinite, 1},
@@ -675,6 +804,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_SBMTrees_qinvgamma", (DL_FUNC) &_SBMTrees_qinvgamma, 3},
     {"_SBMTrees_quadratic_form", (DL_FUNC) &_SBMTrees_quadratic_form, 3},
     {"_SBMTrees_rowSums_I", (DL_FUNC) &_SBMTrees_rowSums_I, 1},
+    {"_SBMTrees_replace_column", (DL_FUNC) &_SBMTrees_replace_column, 4},
     {NULL, NULL, 0}
 };
 

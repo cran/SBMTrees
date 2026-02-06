@@ -5,24 +5,52 @@ DP <- function(parameters, M, N_truncated, N_sample, CDP = TRUE) {
     .Call(`_SBMTrees_DP`, parameters, M, N_truncated, N_sample, CDP)
 }
 
-update_DP_normal <- function(X, tau, L = -1, U = 2) {
+update_DP_normal <- function(X, tau, L = 0, U = 0.5) {
     .Call(`_SBMTrees_update_DP_normal`, X, tau, L, U)
+}
+
+resample_tau <- function(tau) {
+    .Call(`_SBMTrees_resample_tau`, tau)
+}
+
+resample_tau_prob <- function(tau, correct_prob) {
+    .Call(`_SBMTrees_resample_tau_prob`, tau, correct_prob)
+}
+
+predict_tau <- function(tau, N = 1L) {
+    .Call(`_SBMTrees_predict_tau`, tau, N)
+}
+
+probit_probability_tau <- function(tau, y_input) {
+    .Call(`_SBMTrees_probit_probability_tau`, tau, y_input)
+}
+
+normal_probability_tau <- function(tau, y, sigma) {
+    .Call(`_SBMTrees_normal_probability_tau`, tau, y, sigma)
+}
+
+normal_loglik_tau <- function(tau, y, sigma) {
+    .Call(`_SBMTrees_normal_loglik_tau`, tau, y, sigma)
+}
+
+normal_loglik_tau_scalar <- function(tau, y, sigma) {
+    .Call(`_SBMTrees_normal_loglik_tau_scalar`, tau, y, sigma)
 }
 
 DP_sampler <- function(N, parameters) {
     .Call(`_SBMTrees_DP_sampler`, N, parameters)
 }
 
-bart_train <- function(X, Y, nburn = 100L, npost = 1000L, verbose = TRUE) {
-    .Call(`_SBMTrees_bart_train`, X, Y, nburn, npost, verbose)
+sequential_imputation_cpp <- function(X, Y, type, Z, subject_id, R, outcome_BMTrees = TRUE, binary_outcome = FALSE, nburn = 0L, npost = 3L, skip = 1L, verbose = TRUE, CDP_residual = FALSE, CDP_re = FALSE, seed = NULL, tol = 1e-20, ncores = 0L, ntrees = 200L, k = 2.0, pi_CDP = 0.99, correct_prob = 0) {
+    .Call(`_SBMTrees_sequential_imputation_cpp`, X, Y, type, Z, subject_id, R, outcome_BMTrees, binary_outcome, nburn, npost, skip, verbose, CDP_residual, CDP_re, seed, tol, ncores, ntrees, k, pi_CDP, correct_prob)
 }
 
-sequential_imputation_cpp <- function(X, Y, type, Z, subject_id, R, binary_outcome = FALSE, nburn = 0L, npost = 3L, skip = 1L, verbose = TRUE, CDP_residual = FALSE, CDP_re = FALSE, seed = NULL, tol = 1e-20, ncores = 0L, ntrees = 200L, fit_loss = FALSE, resample = 0L, pi_CDP = 0.99) {
-    .Call(`_SBMTrees_sequential_imputation_cpp`, X, Y, type, Z, subject_id, R, binary_outcome, nburn, npost, skip, verbose, CDP_residual, CDP_re, seed, tol, ncores, ntrees, fit_loss, resample, pi_CDP)
+BMTrees_mcmc <- function(X, Y, Z, subject_id, obs_ind, binary = FALSE, nburn = 0L, npost = 3L, verbose = TRUE, CDP_residual = FALSE, CDP_re = FALSE, seed = NULL, tol = 1e-40, ntrees = 200L, pi_CDP = 0.99, k = 2.0) {
+    .Call(`_SBMTrees_BMTrees_mcmc`, X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol, ntrees, pi_CDP, k)
 }
 
-BMTrees_mcmc <- function(X, Y, Z, subject_id, obs_ind, binary = FALSE, nburn = 0L, npost = 3L, verbose = TRUE, CDP_residual = FALSE, CDP_re = FALSE, seed = NULL, tol = 1e-40, ntrees = 200L, resample = 0L, pi_CDP = 0.99) {
-    .Call(`_SBMTrees_BMTrees_mcmc`, X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol, ntrees, resample, pi_CDP)
+BMLMM_mcmc <- function(X, Y, Z, subject_id, obs_ind, binary = FALSE, nburn = 0L, npost = 3L, verbose = TRUE, CDP_residual = FALSE, CDP_re = FALSE, seed = NULL, tol = 1e-40) {
+    .Call(`_SBMTrees_BMLMM_mcmc`, X, Y, Z, subject_id, obs_ind, binary, nburn, npost, verbose, CDP_residual, CDP_re, seed, tol)
 }
 
 update_Covariance <- function(B, Mu, inverse_wishart_matrix, df, N_subject) {
@@ -141,6 +169,10 @@ create_row_id_to_row <- function(row_id) {
     .Call(`_SBMTrees_create_row_id_to_row`, row_id)
 }
 
+create_row_id_to_re <- function(row_id, re) {
+    .Call(`_SBMTrees_create_row_id_to_re`, row_id, re)
+}
+
 innerProduct <- function(x, y) {
     .Call(`_SBMTrees_innerProduct`, x, y)
 }
@@ -191,5 +223,9 @@ quadratic_form <- function(X, mu, Sigma) {
 
 rowSums_I <- function(mat) {
     .Call(`_SBMTrees_rowSums_I`, mat)
+}
+
+replace_column <- function(replace, column, rows, values) {
+    .Call(`_SBMTrees_replace_column`, replace, column, rows, values)
 }
 

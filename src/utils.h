@@ -41,18 +41,18 @@ double max_d(double x, double y){
 
 // [[Rcpp::export]]
 NumericVector seqD(double x, double y, double by = 1) {
-  
+
   // length of result vector
   int nRatio = (y - x) / by;
   NumericVector anOut(nRatio + 1);
-  
+
   // compute sequence
   int n = 0;
   for (double i = x; i <= y; i = i + by) {
     anOut[n] = i;
     n += 1;
   }
-  
+
   return anOut;
 }
 
@@ -61,23 +61,23 @@ IntegerVector seqC(int x, int y, int by = 1) {
   // length of result vector
   int nRatio = (y - x) / by;
   IntegerVector anOut(nRatio + 1);
-  
+
   // compute sequence
   int n = 0;
   for (int i = x; i <= y; i = i + by) {
     anOut[n] = i;
     n += 1;
   }
-  
+
   return anOut;
 }
 
 // [[Rcpp::export]]
 double prodC(NumericVector x) {
-  
+
   int n = x.size();
   double out;
-  
+
   out = x[0];
   for(int i = 1; i < n; ++i) {
     out = out * x[i];
@@ -149,30 +149,30 @@ NumericMatrix matrix_add(NumericMatrix X, NumericMatrix Z){
 }
 
 
-// [[Rcpp::export]]                                                                                                                                           
-bool contains(std::string s, Rcpp::List L) {                                                                                                                  
-  Rcpp::CharacterVector nv = L.names();                                                                                                                     
-  for (int i=0; i<nv.size(); i++) {                                                                                                                         
-    if (std::string(nv[i]) == s) {                                                                                                                        
-      return true;                                                                                                                                      
-    }                                                                                                                                                     
-  }                                                                                                                                                         
-  return false;                                                                                                                                             
-} 
+// [[Rcpp::export]]
+bool contains(std::string s, Rcpp::List L) {
+  Rcpp::CharacterVector nv = L.names();
+  for (int i=0; i<nv.size(); i++) {
+    if (std::string(nv[i]) == s) {
+      return true;
+    }
+  }
+  return false;
+}
 
 
-// [[Rcpp::export]]                                                                                                                                           
-int contains_index(CharacterVector L, std::string s) {                                                                                                                  
-  for (int i=0; i<L.length(); i++) {                                                                                                                         
-    if (std::string(L[i]) == s) {                                                                                                                        
-      return i;                                                                                                                                      
-    }                                                                                                                                                     
-  }                                                                                                                                                         
-  return -1;                                                                                                                                             
-}   
+// [[Rcpp::export]]
+int contains_index(CharacterVector L, std::string s) {
+  for (int i=0; i<L.length(); i++) {
+    if (std::string(L[i]) == s) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 
-// [[Rcpp::export]]  
+// [[Rcpp::export]]
 NumericMatrix row_matrix_unique_rowname(NumericMatrix X, CharacterVector rowname){
   long nrow = rowname.length();
   long ncol = X.cols();
@@ -197,7 +197,7 @@ NumericMatrix row_matrix_unique_rowname(NumericMatrix X, CharacterVector rowname
   return Y;
 }
 
-// [[Rcpp::export]]  
+// [[Rcpp::export]]
 NumericVector row_matrix_rowname(NumericMatrix X, String rowname){
   CharacterVector X_name = rownames(X);
   NumericVector X_current;
@@ -210,12 +210,12 @@ NumericVector row_matrix_rowname(NumericMatrix X, String rowname){
   return clone(X_current);
 }
 
-// [[Rcpp::export]]  
+// [[Rcpp::export]]
 NumericMatrix matrix_mul_scalar(NumericMatrix X, double scalar){
   return wrap(as<mat>(X) * scalar);
 }
 
-// [[Rcpp::export]]  
+// [[Rcpp::export]]
 NumericMatrix::Row row_matrix_by_rowname(NumericMatrix X, String rowname){
   CharacterVector X_name = rownames(X);
   for(int i = 0 ; i < X.rows(); ++i){
@@ -247,12 +247,12 @@ LogicalVector logic_and(LogicalVector x, LogicalVector y){
     for(int i = 0 ; i < x.length(); ++i){
 
         z.push_back(x[i] && y[i]);
-     
+
     }
   }
   return z;
 }
-  
+
 // [[Rcpp::export]]
 bool any(LogicalVector x){
   for(int i = 0 ; i < x.length() ; ++i){
@@ -285,24 +285,24 @@ NumericVector rtgamma(int n, double shape, double scale, double lower, double up
   // Compute the CDF at the truncation limits
   double F_lower = R::pgamma(lower, shape, scale, /*lower_tail=*/1, /*log_p=*/0);
   double F_upper = R::pgamma(upper, shape, scale, /*lower_tail=*/1, /*log_p=*/0);
-  
+
   // Error handling: Ensure that F_lower < F_upper
   if (F_lower >= F_upper) {
     stop("Invalid truncation limits or gamma parameters.");
   }
-  
+
   // Allocate vector for samples
   NumericVector samples(n);
-  
+
   // Generate samples
   for (int i = 0; i < n; ++i) {
     // Uniform random number between F_lower and F_upper
     double u = R::runif(F_lower, F_upper);
-    
+
     // Inverse CDF (quantile function) to get the sample
     samples[i] = R::qgamma(u, shape, scale, /*lower_tail=*/1, /*log_p=*/0);
   }
-  
+
   return samples;
 }
 
@@ -357,6 +357,18 @@ std::unordered_map<std::string, int> create_row_id_to_row(IntegerVector row_id){
   return row_id_to_row;
 }
 
+// [[Rcpp::export]]
+std::unordered_map<std::string, double> create_row_id_to_re(IntegerVector row_id, NumericVector re){
+  std::unordered_map<std::string, double> row_id_to_re;
+  for (int i = 0 ; i < row_id.length(); ++i){
+    row_id_to_re[std::to_string(row_id[i])] = re[i];
+  }
+  return row_id_to_re;
+}
+
+
+
+
 
 // // [[Rcpp::export]]
 // Rcpp::CharacterVector get_keys(std::unordered_map<std::string, int> myMap) {
@@ -373,7 +385,7 @@ double innerProduct(const NumericVector& x, const NumericVector& y) {
   // Convert NumericVector to arma::vec
   arma::vec x_vec = as<arma::vec>(x);
   arma::vec y_vec = as<arma::vec>(y);
-  
+
   // Calculate the inner product of vectors x and y
   return arma::dot(x_vec, y_vec);
 }
@@ -382,11 +394,11 @@ double innerProduct(const NumericVector& x, const NumericVector& y) {
 NumericMatrix cov(const Rcpp::NumericMatrix& m, double regularization = 1e-6) {
   // Convert NumericMatrix to arma::mat
   arma::mat arma_mat = Rcpp::as<arma::mat>(m);
-  
+
   // Calculate the covariance matrix
   arma::mat covariance = arma::cov(arma_mat);
   arma::mat regularized_cov = covariance + regularization * arma::eye(covariance.n_rows, covariance.n_cols);
-  
+
   return wrap(regularized_cov);
 }
 
@@ -396,7 +408,7 @@ bool isPositiveDefinite(const Rcpp::NumericMatrix& m) {
   arma::mat arma_mat = Rcpp::as<arma::mat>(m);
   arma::mat chol_result;
   bool success = arma::chol(chol_result, arma_mat);
-  
+
   return success;
 }
 
@@ -404,9 +416,9 @@ bool isPositiveDefinite(const Rcpp::NumericMatrix& m) {
 NumericMatrix fix_riwish(const Rcpp::NumericMatrix& m, double regularization = 1e-6) {
   // Convert NumericMatrix to arma::mat
   arma::mat arma_mat = Rcpp::as<arma::mat>(m);
-  
+
   arma::mat regularized = arma_mat + regularization * arma::eye(arma_mat.n_rows, arma_mat.n_cols);
-  
+
   return make_symmetric(wrap(regularized));
 }
 
@@ -417,7 +429,7 @@ NumericMatrix fix_riwish(const Rcpp::NumericMatrix& m, double regularization = 1
 NumericVector matrix_slice_parallel(NumericMatrix A, int i, bool row){
   int n = A.nrow();
   int p = A.ncol();
-  
+
   NumericVector vec;
   if(row){
     for(int j = 0 ; j < p ; ++j){
@@ -479,7 +491,7 @@ double qinvgamma(double p, double shape, double scale) {
   // Get the quantile of the Gamma distribution
   NumericVector quant = {p};
   double gamma_quantile = qgamma(quant, shape, 1 / scale)[0];
-  
+
   // Transform to Inverse Gamma by taking the reciprocal
   return 1.0 / gamma_quantile;
 }
@@ -497,13 +509,26 @@ double quadratic_form(NumericMatrix X, NumericVector mu, NumericMatrix Sigma) {
 // [[Rcpp::export]]
 IntegerVector rowSums_I(NumericMatrix mat) {
   int nRows = mat.nrow();
-  
+
   IntegerVector rowSums;
   //Rcout << mat.size() << std::endl;
   //Rcpp::Rcout << "Matrix dimensions: " << mat.nrow() << "x" << mat.ncol() << std::endl;
   for (int i = 0; i < nRows; ++i) {
     rowSums.push_back(sum(mat(i, _)));
   }
-  
+
   return rowSums;
+}
+
+
+// [[Rcpp::export]]
+LogicalMatrix replace_column(LogicalMatrix replace, int column, LogicalVector rows, LogicalVector values) {
+  int j = 0;
+  for(int i = 0; i < replace.rows(); ++i){
+    if(rows[i] == true){
+      replace(i, column) = values[j];
+      ++j;
+    }
+  }
+  return replace;
 }

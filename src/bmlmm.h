@@ -62,30 +62,55 @@
 
 using namespace Rcpp;
 
-class bmtrees : public bm{
+class bmlmm : public bm{
 public:
-  ~bmtrees() override { delete tree; }
+  ~bmlmm() override { }
 
-  bmtrees(NumericVector Y, NumericMatrix X, NumericMatrix Z, CharacterVector subject_id, IntegerVector row_id, bool binary = false, bool CDP_residual = false, bool CDP_re = false, double tol=1e-40, int ntrees = 200, double k = 2.0, double pi_CDP = 0.99, bool train = true) : bm(Y, X, Z, subject_id, row_id, binary, CDP_residual, CDP_re, tol, ntrees, k, pi_CDP, train) {     // Constructor
-    tree = nullptr;
+  bmlmm(NumericVector Y, NumericMatrix X, NumericMatrix Z, CharacterVector subject_id, IntegerVector row_id, bool binary = false, bool CDP_residual = false, bool CDP_re = false, double tol=1e-40, int ntrees = 200, double k = 2.0, double pi_CDP = 0.99, bool train = true) : bm(Y, X, Z, subject_id, row_id, binary, CDP_residual, CDP_re, tol, ntrees, k, pi_CDP, train) {     // Constructor
+    Rcout << 2123 << std::endl;
     if(train){
-      tree = new bart_model(this->X, this->Y - re - tau_samples, 100L, false, false, false,  ntrees, R_NilValue, k);
-      if(binary){
-        tree -> update(1, 50, 50, 1, false, 10L);
-      }else
-        tree -> update(50, 50, 1, false, 10L);
-
-      tree_pre = colMeans(tree->predict(this->X));
-      sigma = tree->get_sigma();
+      arma::mat copy_X = as_arma_mat(this->X);
+      beta = update_beta(copy_X, as_arma_vec(this->Y - re - tau_samples), sigma);
+      lm_pre = wrap(copy_X * beta);
+      this->update_sigma();
     }
   }
 
+
+  static inline arma::mat as_arma_mat(const NumericMatrix& X) {
+    // const_cast is OK: Armadillo won’t write if you don't
+    return arma::mat(const_cast<double*>(X.begin()), X.nrow(), X.ncol(), /*copy_aux_mem=*/false, /*strict=*/true);
+  }
+  static inline arma::vec as_arma_vec(const NumericVector& y) {
+    return arma::vec(const_cast<double*>(y.begin()), y.size(), false, true);
+  }
+
+  arma::mat inv_X_T_X(arma::mat mat_X){
+    return(arma::inv_sympd(mat_X.t() * mat_X));
+  }
+
+  arma::vec update_beta_mean(arma::mat mat_X, arma::vec mat_Y){
+    return(inv_X_T_X(mat_X) * mat_X.t() * mat_Y);
+  }
+
+  arma::vec update_beta(arma::mat mat_X, arma::vec mat_Y, double sigma){
+    vec beta_mean = update_beta_mean(mat_X, mat_Y);
+    mat beta_var = inv_X_T_X(mat_X) * sigma * sigma;
+    return (arma::vectorise(rmvnorm(1, beta_mean, beta_var)));
+  }
+
+  double rinvgamma(double a, double b){
+    double s = R::rgamma(a, 1 / b);
+    return 1 / s;
+  }
+
+
   void update_sigma() override{
-    NumericVector Y_hat = re + tau_samples + tree_pre;
+    NumericVector Y_hat = re + tau_samples + lm_pre;
     if(!binary){
       double rss = sum(pow(this->Y - Y_hat, 2));
       if(!CDP_residual)
-        sigma = tree -> get_invchi(N, rss);
+        sigma = std::sqrt(rinvgamma(N * 0.5, rss * 0.5));
       else
         sigma = tau["sigma"];
     }else{
@@ -93,41 +118,22 @@ public:
     }
   }
 
-  void update_tree(){
 
-    NumericVector Y_ = Y - re - tau_samples;
-    tree->set_data(X, Y_);
-    List tree_obj = tree -> update(sigma, 1, 1, 1, false, 1L);
-    tree_pre = tree_obj["yhat.train.mean"];
-    // if(CDP_re || CDP_residual)
-    //   tree_pre_mean = mean(tree_pre);
-    // else
-    //   tree_pre_mean = 0;
-    // tree_pre = tree_pre - tree_pre_mean;
-  }
-
-  void set_tree(List tree){
-    //this->tree = tree;
-    tree_pre = tree["yhat.train.mean"];
-
-    sigma = 1;
-    if(!binary){
-      sigma = tree["sigma.mean"];
-    }
-  }
-
-  List get_tree(){
-    return this->tree -> get_tree_object();;
+  NumericVector get_beta(){
+    return wrap(beta);
   }
 
   void update_all(bool verbose = false) override{
     if(verbose)
       Rcout << "update BART" << std::endl;
 
-    update_tree();
+    arma::mat copy_X = as_arma_mat(this->X);
+    beta = update_beta(copy_X, as_arma_vec(this->Y - re - tau_samples), sigma);
+    lm_pre = wrap(copy_X * beta);
+
     if(verbose)
       Rcout << "update residual" << std::endl;
-    NumericVector residual_tem = Y - re - tree_pre;
+    NumericVector residual_tem = Y - re - lm_pre;
     NumericMatrix residual(N, 1, residual_tem.begin());
 
     if(CDP_residual){
@@ -168,7 +174,7 @@ public:
 
     if(verbose)
       Rcout << "update B" << std::endl;
-    B = update_B(Y - tau_samples - tree_pre, z, subject_id, B_tau_samples, subject_to_B, Covariance, sigma);
+    B = update_B(Y - tau_samples - lm_pre, z, subject_id, B_tau_samples, subject_to_B, Covariance, sigma);
 
     if(verbose)
       Rcout << "update random effects" << std::endl;
@@ -177,10 +183,10 @@ public:
     if(binary){
       for(int i = 0; i < N; ++i){
         if(Y_original[i] == 0){
-          NumericVector mean_y = rtruncnorm(1, tree_pre[i] + re[i] + tau_samples[i], sigma, R_NegInf, 0);
+          NumericVector mean_y = rtruncnorm(1, lm_pre[i] + re[i] + tau_samples[i], sigma, R_NegInf, 0);
           Y[i] = mean_y[0];
         }else{
-          NumericVector mean_y = rtruncnorm(1, tree_pre[i] + re [i] + tau_samples[i], sigma, 0, R_PosInf);
+          NumericVector mean_y = rtruncnorm(1, lm_pre[i] + re [i] + tau_samples[i], sigma, 0, R_PosInf);
           Y[i] = mean_y[0];
         }
       }
@@ -194,7 +200,7 @@ public:
 
   List posterior_sampling() override{
     return List::create(
-      Named("tree") = tree->get_tree_object(),
+      Named("beta") = this->get_beta(),
       Named("M") = M,
       Named("M_re") = M_re,
       Named("sigma") = sigma,
@@ -203,25 +209,28 @@ public:
       Named("tau_samples") = tau_samples,
       Named("B_tau_samples") = B_tau_samples,
       Named("re") = re,
-      Named("tree_pre") = tree_pre,
-      Named("y_predict") = tree_pre + re + tau_samples,
+      Named("lm_pre") = lm_pre,
+      Named("y_predict") = lm_pre + re + tau_samples,
       Named("tau") = tau,
       Named("B_tau") = B_tau
     );
   }
 
   NumericVector predict_fix(NumericMatrix X_test) override{
-    NumericVector X_hat_test = colMeans(tree -> predict(X_test, false));
+
+    arma::mat copy_X = as_arma_mat(X_test);
+    NumericVector X_hat_test = wrap(copy_X * beta);
     return X_hat_test;
   };
 
 
 
 private:
+  NumericVector lm_pre;
 
-  bart_model* tree;
+  arma::vec beta;
 
-  NumericVector tree_pre;
+
 
 };
 
@@ -237,7 +246,7 @@ private:
 //   //a.update_sigma();
 //   //a.update(true);
 //   List samples = a.posterior_sampling();
-//   NumericVector expect_Y = as<NumericVector>(samples["tree_pre"]) + as<NumericVector>(samples["re"]);
+//   NumericVector expect_Y = as<NumericVector>(samples["lm_pre"]) + as<NumericVector>(samples["re"]);
 //   return List::create(Named("sample") = a.posterior_sampling(), Named("X_hat_test") = a.predict(X, clone(Z), subject_id, row_id),Named("X_hat_test2") = a.predict(X, clone(Z), subject_id, row_id), Named("Y") = samples["y_predict"], Named("expect_Y") = expect_Y);
 //   //return a.posterior_sampling();
 //   //List post = a.posterior_sampling();

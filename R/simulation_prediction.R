@@ -1,294 +1,314 @@
-#' @title Simulate Longitudinal Data for Prediction
-#' @description Generates a fixed population longitudinal dataset, with random seeds to generate different 
-#' training and testing sets. The function supports customization of linear/nonlinear associations, 
-#' normal/non-normal random effects, and random errors. It splits the data into training and testing sets, 
-#' with the testing set comprising approximately 40% of the data.
+#' @title Simulate Continuous Longitudinal Data for Prediction
 #'
-#' @param n_subject Number of subjects in the dataset. Each subject has multiple observations across 6 follow-up time points. Default: \code{800}.
-#' @param seed Random seed for reproducibility. Ensures different training-testing splits. Default: \code{123}.
-#' @param nonlinear Logical value indicating whether the outcome model includes nonlinear associations. Default: \code{FALSE}.
-#' @param nonrandeff Logical value indicating whether the random effects are non-normal. Default: \code{FALSE}.
-#' @param nonresidual Logical value indicating whether the residuals are non-normal. Default: \code{FALSE}.
-#' @return A list containing:
-#' \describe{
-#'   \item{\code{Y_test_true}}{True values of the vector of outcomes in the testing set.}
-#'   \item{\code{X_train}}{Matrix of covariates in the training set.}
-#'   \item{\code{Y_train}}{Vector of outcomes in the training set.}
-#'   \item{\code{Z_train}}{Matrix of random predictors in the training set.}
-#'   \item{\code{subject_id_train}}{Vector of subject IDs in the training set.}
-#'   \item{\code{time_train}}{Vector of time point in the training set.}
-#'   \item{\code{X_test}}{Matrix of covariates in the testing set.}
-#'   \item{\code{Y_test}}{Vector of outcomes in the testing set.}
-#'   \item{\code{Z_test}}{Matrix of random predictors in the testing set.}
-#'   \item{\code{subject_id_test}}{Vector of subject IDs in the testing set.}
-#'   \item{\code{time_test}}{Vector of time point in the testing set.}
+#' @description Generates synthetic longitudinal data with continuous outcomes, specifically designed for
+#' evaluating prediction models. The function creates a population of subjects with correlated covariates
+#' and outcomes, then splits them into training and testing sets. It offers flexible options for
+#' simulating non-normal random effects (e.g., skewed, mixtures, t-distributions) and residuals,
+#' as well as nonlinear relationships.
+#'
+#' @param train_prop A numeric value between 0 and 1 indicating the proportion of the population to be used
+#' for the training set. Default: \code{0.7}.
+#' @param n_subject An integer specifying the total number of subjects in the population. Default: \code{1000}.
+#' @param n_obs_per_sub An integer specifying the number of observations per subject. Default: \code{5}.
+#' @param seed An optional integer for setting the random seed to ensure reproducibility. Default: \code{NULL}.
+#' @param nonlinear A logical value. If \code{TRUE}, the outcome \code{Y} is generated using a complex
+#' nonlinear function of the covariates. If \code{FALSE}, \code{Y} is a linear combination of covariates.
+#' Default: \code{FALSE}.
+#' @param residual A character string specifying the distribution of the residual errors added to the training outcome.
+#' Options are:
+#' \itemize{
+#'   \item \code{"normal"}: Standard normal distribution.
+#'   \item \code{"normal_mixture"}: Mixture of two normal distributions.
+#'   \item \code{"skewed_normal"}: Skew-normal distribution.
+#'   \item \code{"t3"}: Student's t-distribution with 3 degrees of freedom.
+#'   \item \code{"t2"}: Student's t-distribution with 2 degrees of freedom.
+#' }
+#' @param randeff A character string specifying the distribution of the random effects.
+#' Options are:
+#' \itemize{
+#'   \item \code{"MVN"}: Multivariate Normal distribution.
+#'   \item \code{"MVN_mixture"}: Mixture of Multivariate Normal distributions.
+#'   \item \code{"skewed_MVN"}: Multivariate Skew-normal distribution.
+#'   \item \code{"MVT3"}: Multivariate t-distribution with 3 degrees of freedom.
+#'   \item \code{"MVT2"}: Multivariate t-distribution with 2 degrees of freedom.
 #' }
 #'
-#' @details The function creates a dataset with individuals observed at 6 follow-up time points. It allows 
-#' users to specify whether the associations are linear or nonlinear and whether random effects and residuals 
-#' follow normal or non-normal distributions. Approximately 40% of the data is randomly chosen to form the 
-#' testing set, while the remaining 60% constitutes the training set.
+#' @return A list containing the following components:
+#' \describe{
+#'   \item{subject_id_train}{A vector of subject IDs for the training set.}
+#'   \item{Z_train}{A matrix of random predictors (time/intercept) for the training set.}
+#'   \item{X_train}{A matrix of covariates for the training set.}
+#'   \item{Y_train}{A vector of observed outcomes for the training set (Signal + Random Effects + Residual Error).}
+#'   \item{subject_id_test}{A vector of subject IDs for the testing set.}
+#'   \item{Z_test}{A matrix of random predictors for the testing set.}
+#'   \item{X_test}{A matrix of covariates for the testing set.}
+#'   \item{Y_test}{A vector of "true" outcomes for the testing set (Signal + Random Effects), without residual error.}
+#'   \item{X_pop}{A matrix of covariates for the entire population.}
+#'   \item{y_pop}{A vector of "true" outcomes for the entire population (Signal + Random Effects).}
+#'   \item{I}{A logical vector indicating which observations belong to the training set.}
+#'   \item{X_src}{Duplicate of \code{X_train}, provided for convenience.}
+#'   \item{Y_src}{Duplicate of \code{Y_train}, provided for convenience.}
+#' }
 #'
-#' @examples 
-#'   # Generate data with nonlinear associations and non-normal random effects and residuals
-#'   data <- simulation_prediction(
-#'     n_subject = 800,
-#'     seed = 123,
-#'     nonlinear = TRUE,
-#'     nonrandeff = TRUE,
-#'     nonresidual = TRUE
-#'   )
-#'   # Access training and testing data
-#'   X_train <- data$X_train
-#'   Y_train <- data$Y_train
-#'   Z_train <- data$Z_train
-#'   subject_id_train <- data$subject_id_train
+#' @details
+#' The function first simulates correlated covariates \code{X} using a multivariate normal distribution,
+#' adding subject-specific random variations. The outcome \code{Y} is then constructed based on \code{X}
+#' (either linearly or nonlinearly) and combined with random effects \code{Z * Bi} drawn from the
+#' specified \code{randeff} distribution.
 #'
-#'   X_test <- data$X_test
-#'   Y_test <- data$Y_test
-#'   Z_test <- data$Z_test
-#'   subject_id_test <- data$subject_id_test
-#'   
-#'   Y_test_true = data$Y_test_true
+#' The data is split into training and testing sets based on \code{train_prop}. Crucially, residual noise
+#' (specified by \code{residual}) is added **only** to \code{Y_train}. The \code{Y_test} values represent
+#' the conditional mean (Fixed + Random Effects) and serve as the ground truth for prediction tasks
+#' aiming to recover the de-noised signal.
 #'
-#' @seealso 
-#'  \code{\link[mvtnorm]{Mvnorm}}
-#'  \code{\link[stats]{Chisquare}}
-#'  \code{\link[mice]{ampute}}
-#' @rdname simulation_prediction
-#' @export 
+#' @examples
+#' sim_data <- simulation_prediction_conti(
+#'   train_prop = 0.7,
+#'   n_subject = 200,
+#'   n_obs_per_sub = 5,
+#'   nonlinear = TRUE,
+#'   residual = "normal",
+#'   randeff = "skewed_MVN",
+#'   seed = 123
+#' )
+#' @export
 #' @importFrom mvtnorm rmvnorm
-#' @importFrom stats rchisq
-#' @importFrom mice ampute
-simulation_prediction = function(n_subject = 800, seed = NULL, nonlinear = FALSE, nonrandeff = FALSE, nonresidual = FALSE){
-  set.seed(123)
-  n_obs_per_sub = 6
+#' @importFrom MASS mvrnorm
+#' @importFrom sn rmsn rmst rsn
+#' @importFrom dplyr if_else case_when
+simulation_prediction_conti = function(train_prop = 0.7, n_subject = 1000, n_obs_per_sub = 5, seed = NULL, nonlinear = FALSE, residual = c("normal", "normal_mixture", "skewed_normal", "t3", "t2"), randeff = c("MVN", "MVN_mixture", "skewed_MVN", "MVT3", "MVT2")){
+
+
+  if(!is.null(seed))
+    set.seed(seed)
   n_obs_per_sub = sapply(1:n_subject, function(x) n_obs_per_sub)
   subject_id = c(unlist(sapply(1:n_subject, function(x) rep(x, n_obs_per_sub[x]))))
   n_obs = length(subject_id)
   Z = c(unlist(sapply(1:n_subject, function(x) 1:n_obs_per_sub[x])))
   trajectory = cbind(Z)
-  Z = cbind(Z, Z^2)
-  Z = cbind(rep(1, length(subject_id)), Z)
-  Z = apply(Z[,-1], 2, scale)
+  Z = cbind(Z)
+  Z = apply(Z, 2, scale)
   Z = cbind(1, Z)
   Z_O = cbind(Z)
   n = dim(Z)[1]
 
-  
-  X = mvtnorm::rmvnorm(n_obs, c(0, 2, 5, -10, -3, -8, 9))
-  
-  X[,1] = apply(cbind(X[,1]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
+
+  X = mvtnorm::rmvnorm(n_obs, c(0, 2, 0, 3, 0, -1, 0))
+
+  X[,1:7] = apply(cbind(X[,1:7]), 2, function(X_v){
+    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]), 0.25 * diag(ncol(Z)))
     re = sapply(1:length(subject_id), function(x){
       Z[x,] %*% Bi[subject_id[x],]
     })
+    #re
     X_v + re
   })
-  
-  
-  X[,2] = apply(cbind(X[,2]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  X[,3] = apply(cbind(X[,3]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  X[,4] = apply(cbind(X[,4]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  X[,5] = apply(cbind(X[,5]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  X[,6] = apply(cbind(X[,6]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  X[,7] = apply(cbind(X[,7]), 2, function(X_v){
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-    re = sapply(1:length(subject_id), function(x){
-      Z[x,] %*% Bi[subject_id[x],]
-    })
-    X_v + re
-  })
-  
-  Y = 5 + X[,1] - X[,2] + 3 * X[,3] - 2 * X[,4] + 0.5 * X[,5] - X[,6] + 0.5 * X[,7] 
-  if(nonlinear)
-    Y = 1 * (X[,3] * X[,4]) +        # Interaction1 (scaled down)
-    1 * (X[,7] * X[,1]) +        # Interaction2 (scaled down)
-    1 * log(3 * (X[,5] + X[,6])^2 + 0.5) +        # Simple addition interaction (scaled down)
-    0.5 * X[,2]^2
-  
-  if(nonresidual){
-    Y = Y + (-1)^stats::rbinom(n_obs, 1, prob = 0.5) * stats::rchisq(n_obs, 10)#stats::rnormmix(n_obs, mu = c(-8, -3, 2, 4, 4.5), sigma = c(1, 1, 1, 1, 1), lambda = c(1/5, 1/5, 0.15, 0.25, 1/5))
+
+  if(nonlinear){
+    Y = 1.5 * X[,3] - 1 * X[,4] +        # Interaction1 (scaled down)
+      -0.7 * (X[,7] + 0.5)^2 +        # Interaction2 (scaled down)
+      X[,1] * X[,6] +
+      3 * log(3 * (X[,5])^2 + 0.5) +        # Simple addition interaction (scaled down)
+      0.5 * X[,2]^2
   }else{
-    Y = Y + stats::rnorm(n_obs,sd = 5)
+    Y = X[,1] - X[,2] + 3 * X[,3] - 2 * X[,4] + 0.5 * X[,5] - X[,6] + 0.5 * X[,7]
   }
 
-  if (nonrandeff){
-    
-    # Define enhanced parameters
-    xi <- c(0, 0, 0)  # Location vector
-    
-    
-    Omega <- matrix(c(1.0, 0.5, 0.3,
-                      0.5, 1.0, 0.4,
-                      0.3, 0.4, 1.0),
-                    nrow = 3, byrow = TRUE)
-    alpha <- c(1, 1, 1) 
-    Bi <- sn::rmst(n = n_subject, xi = xi, Omega = Omega, alpha = alpha, nu = 5)
-  }else{
-    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]))
-  }
+
+  Omega <- matrix(c(1.0, 0.3,
+                    0.3, 1.0),
+                  nrow = 2, byrow = TRUE)
+  xi <- c(0, 0)  # Location vector
+
+
+  Bi = dplyr::case_when(
+    randeff == "MVN" ~ MASS::mvrnorm(n = n_subject, mu = c(0,0), Sigma = Omega),
+    randeff == "MVN_mixture" ~ dplyr::if_else(rbinom(n_subject, 1, 0.5) == 1, MASS::mvrnorm(n = n_subject, mu = c(2,2), Sigma = Omega), MASS::mvrnorm(n = n_subject, mu = c(-2,-2), Sigma = Omega)),
+    randeff == "skewed_MVN" ~ sn::rmsn(n = n_subject, xi = xi, Omega = Omega, alpha = c(2, -8)),
+    randeff == "MVT3" ~ sn::rmst(n = n_subject, xi = xi, Omega = Omega, alpha = c(0, 0), nu = 3),
+    randeff == "MVT2" ~ sn::rmst(n = n_subject, xi = xi, Omega = Omega, alpha = c(0, 0), nu = 2)
+  )
   re = sapply(1:length(subject_id), function(x){
     Z[x,] %*% Bi[subject_id[x],]
   })
   Y = Y + re
 
-  
-  Y_copy = as.numeric(Y)
-  
-  
-  data_O = dplyr::tibble(
-    subject_id = subject_id,
-    time = c(unlist(sapply(1:n_subject, function(x) 1:n_obs_per_sub[x]))),
-    X1 = X[,1],
-    X2 = X[,2],
-    X3 = X[,3],
-    X4 = X[,4],
-    X5 = X[,5],
-    X6 = X[,6],
-    X7 = X[,7],
-    Y = Y_copy
-  )
-  
-  data = data_O %>% 
-    tidyr::pivot_wider(id_cols = "subject_id", names_from = "time", values_from = c("X1", "X2", "X3", "X4", "X5", "X6", "X7", "Y"))
-  
-  
-  
-  
-  patterns = matrix(1, nrow = n_obs_per_sub[1], ncol = n_obs_per_sub[1] * 8)
-  patterns[1, 43] = 0
-  patterns[2, 44] = 0
-  patterns[3, 45] = 0
-  patterns[4, 46] = 0
-  patterns[5, 47] = 0
-  patterns[6, 48] = 0
-  
-  for (i in 43:47) {
-    for (j in (i + 1):48) {
-      a = rep(1, n_obs_per_sub[1] * 8)
-      a[i] = 0
-      a[j] = 0
-      patterns = rbind(patterns, a)
-    }
-  }
-  
-  for (i in 43:46) {
-    for (j in (i + 1):47) {
-      for (k in (j + 1):48) {
-        a = rep(1, n_obs_per_sub[1] * 8)
-        a[i] = 0
-        a[j] = 0
-        a[k] = 0
-        patterns = rbind(patterns, a)
-      }
-    }
-  }
-  
-  freq = rep(0.1, dim(patterns)[1])
-  if (!is.null(seed))
-    set.seed(seed)
-  a = mice::ampute(data[,-1], mech = "MCAR", patterns = patterns, prop = 0.9999, freq = freq)
- 
-  
-  
-  
+  I = sample(1:n, size = round(n * train_prop), replace = F)
+  I = replace(rep(FALSE, n), I, TRUE)
 
-  
-  b = dplyr::as_tibble(a$amp) %>%
-    dplyr::mutate(subject_id = data$subject_id) %>% 
-    tidyr::pivot_longer(cols = c(tidyr::starts_with("X"), tidyr::starts_with("Y")), names_prefix = "_", values_to = "value", names_to = "Variable") %>%
-    tidyr::separate(col = "Variable", into = c("Variable", "Time"), sep = "_") %>% 
-    tidyr::pivot_wider(id_cols = c("subject_id", "Time"), names_from = "Variable", values_from = "value") %>% 
-    dplyr::mutate(followup = ifelse(
-      is.na("X1") & is.na("X2") & is.na("X3") & is.na("X4") & is.na("X5") & is.na("X6") & is.na("X7") & is.na("Y"),
-      0,
-      1
-    ))
-  
-  
-  subject_id = b$subject_id
-  trajectory = b$Time
-  Y = unlist(b[,10])
-  Y_O = Y_copy
-  subject_id = data_O$subject_id
-  
-  omit_sub = sapply(unique(subject_id), function(sub){
-    t = sum(subject_id == sub)
-    X_sub = cbind(X[subject_id == sub,], Y[subject_id == sub])
-    if (sum(colSums(is.na(X_sub)) == t) > 0){
-      return(sub)
-    }
-    return(NA)
-  })
-  omit_sub = omit_sub[!is.na(omit_sub)]
-  if(length(omit_sub) > 0){
-    warning(paste0("Some variables of ", length(omit_sub), " subjects are missing at all time points, we delete data from these ", length(omit_sub), " subjects:\n", paste(omit_sub, collapse = ", ")))
-    
-    X = X[!subject_id %in% omit_sub,]
-    Y = Y[!subject_id %in% omit_sub]
-    Y_copy = Y_copy[!subject_id %in% omit_sub]
-    
-    Z = Z[!subject_id %in% omit_sub,]
-    Z_O = Z_O[!subject_id %in% omit_sub,]
-    
-    trajectory = trajectory[!subject_id %in% omit_sub]
-    Bi = Bi[-omit_sub,]
-    re = re[!subject_id %in% omit_sub]
-    subject_id = subject_id[!subject_id %in% omit_sub]
-  }
-  training_indicator = !is.na(Y)
-  X_train = X[training_indicator,]
-  Y_train = Y[training_indicator]
-  Z_train = Z_O[training_indicator,]
-  subject_id_train = subject_id[training_indicator]
-  time_train = trajectory[training_indicator]
-  
-  X_test = X[!training_indicator,]
-  Y_test = Y[!training_indicator]
-  Z_test = Z_O[!training_indicator,]
-  subject_id_test = subject_id[!training_indicator]
-  time_test = trajectory[!training_indicator]
-  
-  Y_test_true = Y_O[!training_indicator]
-  
-  return(list(Y_test_true = Y_test_true, X_train = X_train, Y_train = Y_train, Z_train = Z_train, subject_id_train = subject_id_train, time_train = time_train, X_test = X_test, Y_test = Y_test, Z_test = Z_test, subject_id_test = subject_id_test, time_test = time_test))
+  Y_train = Y[I == TRUE]
+  subject_id_train = subject_id[I == TRUE]
+
+  res = dplyr::case_when(
+    residual == "normal" ~ rnorm(n = sum(I), 0, sd = 5),
+    residual == "normal_mixture" ~ dplyr::if_else(rbinom(sum(I), 1, 0.5) == 1, rnorm(n = sum(I), 5, sd = 2), rnorm(n = sum(I), -5, sd = 2)),
+    residual == "skewed_normal" ~ sn::rsn(n = sum(I), xi = 0, omega = 5, alpha=8, tau = 3.5),
+    residual == "t3" ~ rt(sum(I), df = 3),
+    residual == "t2" ~ rt(sum(I), df = 2)
+  )
+
+  return(list(subject_id_train = subject_id_train, Z_train = Z[I,], X_train = X[I,], Y_train = Y_train + res, X_pop = X, y_pop = Y, I = I, subject_id_test = subject_id[!I],  Z_test = Z[!I,], X_test = X[!I,], Y_test = Y[!I], X_src = X[I,], Y_src = Y[I]))
 }
 
 
+#' @title Simulate Binary Longitudinal Data for Prediction
+#'
+#' @description Generates synthetic longitudinal data with binary outcomes, designed for evaluating
+#' classification and prediction models. The function creates a latent continuous variable based on
+#' covariates and random effects, then converts it into binary outcomes using various link functions
+#' (corresponding to the \code{residual} argument).
+#'
+#' @param train_prop A numeric value between 0 and 1 indicating the proportion of the population to be used
+#' for the training set. Default: \code{0.7}.
+#' @param n_subject An integer specifying the total number of subjects in the population. Default: \code{1000}.
+#' @param n_obs_per_sub An integer specifying the number of observations per subject. Default: \code{5}.
+#' @param seed An optional integer for setting the random seed to ensure reproducibility. Default: \code{NULL}.
+#' @param nonlinear A logical value. If \code{TRUE}, the latent variable is generated using a complex
+#' nonlinear function of the covariates. If \code{FALSE}, it is a linear combination. Default: \code{FALSE}.
+#' @param residual A character string specifying the link function (CDF) used to generate probabilities from the latent variable.
+#' This effectively acts as the error distribution assumption in a Generalized Linear Mixed Model (GLMM) context:
+#' \itemize{
+#'   \item \code{"normal"}: Uses the standard normal CDF (Probit link).
+#'   \item \code{"logistic"}: Uses the logistic CDF (Logit link).
+#'   \item \code{"t3"}: Uses the Student's t (df=3) CDF.
+#'   \item \code{"t2"}: Uses the Student's t (df=2) CDF.
+#' }
+#' @param randeff A character string specifying the distribution of the random effects added to the latent variable.
+#' Options are:
+#' \itemize{
+#'   \item \code{"MVN"}: Multivariate Normal distribution.
+#'   \item \code{"MVN_mixture"}: Mixture of Multivariate Normal distributions.
+#'   \item \code{"skewed_MVN"}: Multivariate Skew-normal distribution.
+#'   \item \code{"MVT3"}: Multivariate t-distribution with 3 degrees of freedom.
+#'   \item \code{"MVT2"}: Multivariate t-distribution with 2 degrees of freedom.
+#' }
+#'
+#' @return A list containing the following components:
+#' \describe{
+#'   \item{subject_id_train}{A vector of subject IDs for the training set.}
+#'   \item{Z_train}{A matrix of random predictors (time/intercept) for the training set.}
+#'   \item{X_train}{A matrix of covariates for the training set.}
+#'   \item{Y_train}{A vector of **observed binary outcomes** (0 or 1) for the training set.}
+#'   \item{subject_id_test}{A vector of subject IDs for the testing set.}
+#'   \item{Z_test}{A matrix of random predictors for the testing set.}
+#'   \item{X_test}{A matrix of covariates for the testing set.}
+#'   \item{Y_test}{A vector of **true probabilities** for the testing set. These represent the ground truth propensity scores (0 to 1) used for evaluation.}
+#'   \item{X_pop}{A matrix of covariates for the entire population.}
+#'   \item{y_pop}{A vector of true probabilities for the entire population.}
+#'   \item{I}{A logical vector indicating which observations belong to the training set.}
+#'   \item{X_src}{Duplicate of \code{X_train}, provided for convenience.}
+#'   \item{Y_src}{Vector of true probabilities for the training set (unlike \code{Y_train} which is binary).}
+#' }
+#'
+#' @details
+#' The function simulates a latent continuous variable \eqn{Y^*} based on fixed effects (linear or nonlinear \code{X})
+#' and random effects (\code{Z * Bi}). This latent variable is scaled and then transformed into a probability \eqn{p}
+#' using the CDF specified by \code{residual}.
+#'
+#' For the training set, the observed outcome \code{Y_train} is sampled from a Bernoulli distribution
+#' with probability \eqn{p}. For the testing set, the function returns the probability \eqn{p} itself (\code{Y_test}),
+#' allowing for precise evaluation of the model's ability to estimate propensity scores or risk.
+#'
+#' @examples
+#' # Simulate data with logistic link (Logit) and mixture of normal random effects
+#' sim_bin <- simulation_prediction_binary(
+#'   train_prop = 0.7,
+#'   n_subject = 500,
+#'   residual = "logistic",
+#'   randeff = "MVN_mixture",
+#'   seed = 123
+#' )
+#' @export
+#' @importFrom mvtnorm rmvnorm
+#' @importFrom MASS mvrnorm
+#' @importFrom sn rmsn rmst
+#' @importFrom dplyr if_else case_when
+#' @importFrom arm invlogit
+#' @importFrom stats pnorm pt rbinom rnorm
+simulation_prediction_binary = function(train_prop = 0.7, n_subject = 1000, n_obs_per_sub = 5, seed = NULL, nonlinear = FALSE, residual = c("normal", "logistic", "t3", "t2"), randeff = c("MVN", "MVN_mixture", "skewed_MVN", "MVT3", "MVT2")){
 
+
+  if(!is.null(seed))
+    set.seed(seed)
+  n_obs_per_sub = sapply(1:n_subject, function(x) n_obs_per_sub)
+  subject_id = c(unlist(sapply(1:n_subject, function(x) rep(x, n_obs_per_sub[x]))))
+  n_obs = length(subject_id)
+  Z = c(unlist(sapply(1:n_subject, function(x) 1:n_obs_per_sub[x])))
+  trajectory = cbind(Z)
+  Z = cbind(Z)
+  Z = apply(Z, 2, scale)
+  Z = cbind(1, Z)
+  Z_O = cbind(Z)
+  n = dim(Z)[1]
+
+
+  X = mvtnorm::rmvnorm(n_obs, c(0, 2, 0, 3, 0, -1, 0))
+
+  X[,1:7] = apply(cbind(X[,1:7]), 2, function(X_v){
+    Bi = mvtnorm::rmvnorm(n_subject, rep(0, dim(Z)[2]), 0.25 * diag(ncol(Z)))
+    re = sapply(1:length(subject_id), function(x){
+      Z[x,] %*% Bi[subject_id[x],]
+    })
+    #re
+    X_v + re
+  })
+
+  if(nonlinear){
+    Y = 1.5 * X[,3] - 1 * X[,4] +        # Interaction1 (scaled down)
+      -0.7 * (X[,7] + 0.5)^2 +        # Interaction2 (scaled down)
+      X[,1] * X[,6] +
+      3 * log(3 * (X[,5])^2 + 0.5) +        # Simple addition interaction (scaled down)
+      0.5 * X[,2]^2
+  }else{
+    Y = X[,1] - X[,2] + 3 * X[,3] - 2 * X[,4] + 0.5 * X[,5] - X[,6] + 0.5 * X[,7]
+  }
+
+
+  Omega <- matrix(c(1.0, 0.3,
+                    0.3, 1.0),
+                  nrow = 2, byrow = TRUE)
+  xi <- c(0, 0)  # Location vector
+
+
+  Bi = dplyr::case_when(
+    randeff == "MVN" ~ MASS::mvrnorm(n = n_subject, mu = c(0,0), Sigma = Omega),
+    randeff == "MVN_mixture" ~ dplyr::if_else(rbinom(n_subject, 1, 0.5) == 1, MASS::mvrnorm(n = n_subject, mu = c(2,2), Sigma = Omega), MASS::mvrnorm(n = n_subject, mu = c(-2,-2), Sigma = Omega)),
+    randeff == "skewed_MVN" ~ sn::rmsn(n = n_subject, xi = xi, Omega = Omega, alpha = c(2, -8)),
+    randeff == "MVT3" ~ sn::rmst(n = n_subject, xi = xi, Omega = Omega, alpha = c(0, 0), nu = 3),
+    randeff == "MVT2" ~ sn::rmst(n = n_subject, xi = xi, Omega = Omega, alpha = c(0, 0), nu = 2)
+  )
+  re = sapply(1:length(subject_id), function(x){
+    Z[x,] %*% Bi[subject_id[x],]
+  })
+  Y = Y + re
+  Y = Y / 5
+
+  I = sample(1:n, size = round(n * train_prop), replace = F)
+  I = replace(rep(FALSE, n), I, TRUE)
+
+  Y_train = Y[I == TRUE]
+  subject_id_train = subject_id[I == TRUE]
+
+  if(residual == "normal"){
+    Y_train = rbinom(length(Y_train), 1, pnorm(Y_train, sd = 1))
+    y_pop =  pnorm(Y, sd = 5)
+    Y_test = pnorm(Y[!I], sd = 5)
+    Y_src = pnorm(Y[I], sd = 5)
+  }else if(residual == "logistic"){
+    Y_train = rbinom(length(Y_train), 1, arm::invlogit(Y_train))
+    y_pop =  arm::invlogit(Y)
+    Y_test = arm::invlogit(Y[!I])
+    Y_src = arm::invlogit(Y[I])
+  }else if(residual == "t3"){
+    Y_train = rbinom(length(Y_train), 1, pt(Y_train, df = 3))
+    y_pop =  pt(Y, df = 3)
+    Y_test = pt(Y[!I], df = 3)
+    Y_src = pt(Y[I], df = 3)
+  }else if(residual == "t2"){
+    Y_train = rbinom(length(Y_train), 1, pt(Y_train, df = 2))
+    y_pop =  pt(Y, df = 2)
+    Y_test = pt(Y[!I], df = 2)
+    Y_src = pt(Y[I], df = 2)
+  }
+  return(list(subject_id_train = subject_id_train, Z_train = Z[I,], X_train = X[I,], Y_train = Y_train, X_pop = X, y_pop = y_pop, I = I, subject_id_test = subject_id[!I],  Z_test = Z[!I,], X_test = X[!I,], Y_test = Y_test, X_src = X[I,], Y_src = Y_src))
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sequential_imputation.R
 \name{sequential_imputation}
 \alias{sequential_imputation}
-\title{Sequential Imputation for Missing Data}
+\title{Longitudinal Sequential Imputation for Longitudinal Missing Data}
 \usage{
 sequential_imputation(
   X,
@@ -12,16 +12,17 @@ sequential_imputation(
   type,
   binary_outcome = FALSE,
   model = c("BMTrees", "BMTrees_R", "BMTrees_RE", "mixedBART"),
+  outcome_model = c("BMTrees", "BMLM"),
   nburn = 0L,
   npost = 3L,
   skip = 1L,
   verbose = TRUE,
   seed = NULL,
   tol = 1e-20,
-  resample = 5,
+  k = 2,
   ntrees = 200,
   reordering = TRUE,
-  pi_CDP = 0.99
+  pi_DP = 0.99
 )
 }
 \arguments{
@@ -29,16 +30,19 @@ sequential_imputation(
 
 \item{Y}{A vector of missing outcomes (numeric or logical).}
 
-\item{Z}{A matrix of complete random predictors.}
+\item{Z}{A matrix of complete random predictors. Default: \code{NULL}.}
 
-\item{subject_id}{A vector of subject IDs corresponding to the rows of \code{X} and \code{Y}. Can be both integer or character}
+\item{subject_id}{A vector of subject IDs corresponding to the rows of \code{X} and \code{Y}. Can be integer, factor, or character.}
 
-\item{type}{A logical vector indicating whether each covariate in \code{X} is binary (1) or continuous (0).}
+\item{type}{A vector indicating whether each covariate in \code{X} is binary (1) or continuous (0).}
 
-\item{binary_outcome}{A logical value indicating whether the outcome \code{Y} is binary (1) or continuous (0). Default: \code{0}.}
+\item{binary_outcome}{A logical value indicating whether the outcome \code{Y} is binary. Default: \code{FALSE}.}
 
-\item{model}{A character vector specifying the imputation model. Options are \code{"BMTrees"},
-\code{"BMTrees_R"}, \code{"BMTrees_RE"}, and \code{"mixedBART"}. Default: \code{"BMTrees"}.}
+\item{model}{A character vector specifying the imputation model for the covariates. Options are \code{"BMTrees"} (default),
+\code{"BMTrees_R"} (residual DP), \code{"BMTrees_RE"} (random effect DP), and \code{"mixedBART"}.}
+
+\item{outcome_model}{A character vector specifying the model used for the outcome. Options are \code{"BMTrees"} (default) or
+\code{"BMLM"} (Bayesian Mixed Linear Model). If \code{"BMLM"} is selected, posterior estimates for beta and sigma are returned.}
 
 \item{nburn}{An integer specifying the number of burn-in iterations. Default: \code{0}.}
 
@@ -52,33 +56,33 @@ sequential_imputation(
 
 \item{tol}{A small numerical tolerance to prevent numerical overflow or underflow in the model. Default: \code{1e-20}.}
 
-\item{resample}{An integer specifying the number of resampling steps for the CDP prior. Default: \code{5}. This parameter is only valid for \code{"BMTrees"} and \code{"BMTrees_R"}.}
+\item{k}{A numeric value for the BART prior parameter controlling the standard deviation of the terminal node values. Default: \code{2.0}.}
 
 \item{ntrees}{An integer specifying the number of trees in BART. Default: \code{200}.}
 
-\item{reordering}{A logical value indicating whether to apply a reordering strategy for sorting covariates. Default: \code{TRUE}.}
+\item{reordering}{A logical value indicating whether to apply a reordering strategy for sorting covariates based on missingness. Default: \code{TRUE}.}
 
-\item{pi_CDP}{A value between 0 and 1 for calculating the empirical prior in the CDP prior. Default: \code{0.99}.}
+\item{pi_DP}{A value between 0 and 1 for calculating the empirical prior in the DP prior. Default: \code{0.99}.}
 }
 \value{
-A three-dimensional array of imputed data with dimensions \code{(npost / skip, N, p + 1)}, where:
-\itemize{
-\item \code{N} is the number of observations.
-\item \code{p} is the number of covariates in \code{X}.
-The array includes imputed covariates and outcomes.
-}
+A list containing:
+\item{imputed_data}{A three-dimensional array of imputed data with dimensions \code{(npost / skip, N, p + 1)}, where \code{N} is the number of observations and \code{p} is the number of covariates. The last column represents the outcome \code{Y}.}
+\item{posterior_sigma}{(Only if \code{outcome_model = "BMLM"}) A vector of posterior samples for the error standard deviation.}
+\item{posterior_beta}{(Only if \code{outcome_model = "BMLM"}) A matrix of posterior samples for the regression coefficients.}
 }
 \description{
 Implements sequential imputation for missing covariates and outcomes in longitudinal data.
 The function uses a Bayesian non-parametric framework with mixed-effects models to handle both
 normal and non-normal random effects and errors. It sequentially imputes missing values by constructing
-univariate models in a fixed order, ensuring simplicity and consistency with a valid joint distribution.
+univariate models in a fixed order, initializing with LOCF/NOCB, and ensuring consistency with a valid joint distribution.
 }
 \details{
 The function builds on the Bayesian Trees Mixed-Effects Model (BMTrees), which extends Mixed-Effects
-BART by using centralized Dirichlet Process (CDP) Normal Mixture priors. This framework handles non-normal
-random effects and errors, addresses model misspecification, and captures complex relationships. The function
-employs a Metropolis-Hastings MCMC method to sequentially impute missing values.
+BART by using centralized Dirichlet Process Normal Mixture priors. This framework handles non-normal
+random effects and errors, addresses model misspecification, and captures complex relationships.
+
+The algorithm initializes missing values using Last Observation Carried Forward (LOCF) and Next Observation Carried Backward (NOCB)
+before starting the MCMC sequential imputation process.
 }
 \note{
 This function utilizes modified C++ code originally derived from the
@@ -87,18 +91,14 @@ was developed by Rodney Sparapani and is licensed
 under GPL-2. Modifications were made by Jungang Zou, 2024.
 }
 \examples{
-\donttest{
-data <- simulation_imputation(n_subject = 100, seed = 1234, nonrandeff = TRUE, 
-        nonresidual = TRUE, alligned = FALSE) 
+data <- simulation_imputation(NNY = TRUE, NNX = TRUE, n_subject = 10, seed = 123)
+BMTrees <- sequential_imputation(X = data$data_M[,3:5], Y = data$data_M$Y, Z = data$Z,
+  subject_id = data$data_M$subject_id, type = c(0, 0, 0),
+  outcome_model = "BMLM", binary_outcome = FALSE, model = "BMTrees", nburn = 0,
+  npost = 1, skip = 1, verbose = FALSE, seed = 123)
 
-# To make it faster to compile and check, we only run 30 iterations for burn-in 
-# and 40 for posterior sampling phases.
-# Please increase to 3000 and 4000 iterations, respectively, when running the model.
-model <- sequential_imputation(data$X_mis, data$Y_mis, data$Z, data$subject_id, 
-        rep(0, 9), binary_outcome = FALSE, model = "BMTrees", nburn = 30L, 
-        npost = 40L, skip = 2L, verbose = TRUE, seed = 1234)
-model$imputed_data
-}
+# Access imputed data
+dim(BMTrees$imputed_data)
 }
 \references{
 For more information about the original BART3 package, see:

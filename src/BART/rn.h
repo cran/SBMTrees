@@ -18,6 +18,14 @@
  *  https://www.R-project.org/Licenses/GPL-2
  */
 
+/*
+ *  Modifications by Jungang Zou, 2024.
+ *  - To make sure the random seeds set in R function work, we deleted two implementation of arn.
+ *
+ *  These modifications comply with the terms of the GNU General Public License 
+ *  version 2 (GPL-2).
+ */
+
 
 #ifndef GUARD_rn_h
 #define GUARD_rn_h

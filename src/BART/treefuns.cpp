@@ -54,18 +54,7 @@ void grm(tree& tr, xinfo& xi, std::ostream& os)
    delete[] x;
 }
 //--------------------------------------------------
-//fit tree at matrix of x, matrix is stacked columns x[i,j] is *(x+p*i+j)
-void fit(tree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv)
-{
-   tree::tree_p bn;
-   for(size_t i=0;i<n;i++) {
-     //cout << "i:" << i << std::endl;
-      bn = t.bn(x+i*p,xi);
-      
-      fv[i] = bn->gettheta();
-      
-   }
-}
+
 //--------------------------------------------------
 //does this bottom node n have any variables it can split on.
 bool cansplit(tree::tree_p n, xinfo& xi)

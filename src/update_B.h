@@ -42,7 +42,7 @@ using namespace std;
 
 NumericMatrix update_B(NumericVector re, NumericMatrix Z, CharacterVector subject_id, NumericMatrix Mu, std::unordered_map<std::string, int> subject_to_B, NumericMatrix Covariance, double sigma){
   NumericMatrix B(subject_to_B.size(), Z.ncol());
-                              
+
   CharacterVector subject_names = unique(subject_id);
   //Rcout << "inv_covariance" << std::endl;
   NumericMatrix inv_covariance = solve_pos_def(Covariance);
@@ -78,24 +78,25 @@ NumericMatrix update_B(NumericVector re, NumericMatrix Z, CharacterVector subjec
       //Rcout << inv_covariance;
       NumericMatrix a = matrix_add(inv_covariance, matrix_mul_scalar(matrix_multiply(transpose(Zi), Zi), 1 / pow(sigma, 2)));
       NumericMatrix var = solve_pos_def(a);
-      
+
       NumericVector mui_v = Mu(B_position, _);
       NumericMatrix mui = NumericMatrix(1, mui_v.length(), mui_v.begin());
       NumericMatrix ri = NumericMatrix(Ri.length(), 1, Ri.begin());
       NumericVector mu = wrap(matrix_multiply( matrix_add(matrix_multiply(mui, inv_covariance), transpose(matrix_mul_scalar(matrix_multiply(transpose(Zi), ri), 1/ pow(sigma,2)))), var));
-      
+
       //Rcout << mu << " | " << var(0, 0) << " ||| ";
-      
+
       NumericVector B_s = wrap(rmvnorm(1, mu, as<arma::mat>(var)));
       B(B_position, _) = B_s;
-    }else{ 
-      
+    }else{
+
     }
-    
-    
-  //for(int i = 0; i < 1; ++i){
-    
   }
+  // for(int j = 0; j < Z.ncol(); ++j){
+  //   if(var(Z(_, j)) == 0.0){
+  //     B(_, j) = B(_, j) - mean(B(_, j));
+  //   }
+  // }
   //Rcout <<std::endl;
   return B;
 }

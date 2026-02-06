@@ -30,7 +30,18 @@ void prxi(xinfo& xi);
 void grm(tree& tr, xinfo& xi, std::ostream& os);
 //--------------------------------------------------
 //fit tree at matrix of x, matrix is stacked columns x[i,j] is *(x+p*i+j)
-void fit(tree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv);
+//fit tree at matrix of x, matrix is stacked columns x[i,j] is *(x+p*i+j)
+void fit(tree& t, xinfo& xi, size_t p, size_t n, double *x,  double* fv)
+{
+  tree::tree_p bn;
+  for(size_t i=0;i<n;i++) {
+    //cout << "i:" << i << std::endl;
+    bn = t.bn(x+i*p,xi);
+    
+    fv[i] = bn->gettheta();
+    
+  }
+}
 //--------------------------------------------------
 //does a (bottom) node have variables you can split on?
 bool cansplit(tree::tree_p n, xinfo& xi);
