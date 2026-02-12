@@ -1,9 +1,9 @@
 570a9b3749dd0463a1778803b12a6dce *COPYING
-6be6d989ba24e76170cded1c5906ff3a *DESCRIPTION
+99ca01f475cc1ba3a6d3722205e5c81e *DESCRIPTION
 90dc487674055f5378663df11dc6253f *NAMESPACE
-0112658b0118ee07b7a8fffbeebf8939 *NEWS.md
+4212939248f4c5c2d6bac682016921e9 *NEWS.md
 e878f961cbaaa2a525a4c457025ac8e6 *R/BMTrees_prediction.R
-0664803ba88637c3e24dd816c97775fe *R/RcppExports.R
+0139942846ebfcb6b1557573cf844bcb *R/RcppExports.R
 982662001eb341946f899e5d63c1b54d *R/Rcpp_function.R
 15d8a1e5f62ca0c69340e7940b9a4ec3 *R/sequential_imputation.R
 a5b95681c09dd5222d92ffdf6585daac *R/simulation_imputation.R
@@ -12,7 +12,7 @@ f3879ef42cf3e179c191246935903e16 *README.md
 4a6a65cd0730c1f2231e1461c03c5866 *build/vignette.rds
 96730a615abe5e234285cd2f0aaaebda *inst/doc/SBMTrees_Introduction.R
 6887d88091893f90689238edf758586d *inst/doc/SBMTrees_Introduction.Rmd
-30e0bfecc12d4f67e728dac75764be98 *inst/doc/SBMTrees_Introduction.html
+325fcd72e974317952d1bde6b682f928 *inst/doc/SBMTrees_Introduction.html
 296ee1f36028caf9347d839afd872459 *man/BMLMM_prediction.Rd
 1b030383d23fc39db5df76f3c910d30c *man/BMTrees_prediction.Rd
 8bd55b19de16a6db64f8ca6f5b181c90 *man/SBMTrees-package.Rd
@@ -50,8 +50,8 @@ a18e8ff156d03263e17667f028cc763c *src/BART/treefuns.cpp
 82ba1254650dda213000237462949bf8 *src/DP_sampler.h
 7469c0f5c9e6672abb25ff534a93ebd0 *src/Makevars
 26989292b1d95c4a16698718d39b2c8e *src/Makevars.win
-1ef541a780394c46f0e7a642e8bb95bf *src/RcppExports.cpp
-5501bb8a84bad6d8b2564fd68fde1777 *src/bart_model.h
+ac2338b772d13fcb8ea10cfebc71abea *src/RcppExports.cpp
+853931afc33e1d056b67ec6356825799 *src/bart_model.h
 1988795dadfa221ceec4d9d9c3914114 *src/bm.h
 0e923135e8124fea08082197b34da8ad *src/bmlmm.h
 b455724d7bd9c28ba178746dec1e811f *src/bmtrees.h

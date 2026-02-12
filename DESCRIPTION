@@ -2,8 +2,8 @@ Package: SBMTrees
 Type: Package
 Title: Longitudinal Sequential Imputation and Prediction with Bayesian
         Trees Mixed-Effects Models for Longitudinal Data
-Version: 1.4
-Date: 2026-02-03
+Version: 1.5
+Date: 2026-02-06
 Author: Jungang Zou [aut, cre],
   Liangyuan Hu [aut],
   Robert McCulloch [ctb],
@@ -24,6 +24,6 @@ SystemRequirements: GNU make
 Suggests: knitr, rmarkdown, mitml
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2026-02-05 19:24:03 UTC; jz3183
+Packaged: 2026-02-06 21:12:55 UTC; jz3183
 Repository: CRAN
-Date/Publication: 2026-02-06 12:00:02 UTC
+Date/Publication: 2026-02-12 08:10:27 UTC
